@@ -87,11 +87,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             response = "HTTP/1.1 200 OK\nContent-Type:text/" + type + ";charset=UTF-8\n\n"
             print(response)
             self.request.sendall(bytearray(response, "utf-8"))
-            while (True):
-                data = f.read(490)
-                self.request.sendall(bytearray(data, "utf-8"))
-                if not data:
-                    break
+            data = f.read(size)
+            self.request.sendall(bytearray(data, "utf-8"))
 
     def redirect(self, path):
         print("\nRedirecting...")
