@@ -1,3 +1,4 @@
+
 #  coding: utf-8 
 import socketserver
 import sys
@@ -29,11 +30,24 @@ import json
 
 # try: curl -v -X GET http://127.0.0.1:8080/
 
+#   Copyright 2021 Danila Seliayeu
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def __init__(self, request, client_address, server):
-        self.base = "./www"
+        self.base = os.path.realpath("./www")
         super().__init__(request, client_address, server)
 
     def handle(self):
@@ -43,20 +57,28 @@ class MyWebServer(socketserver.BaseRequestHandler):
         method, path, protocol = statusLine.split(" ")
 
         if (method == "POST" or method == "PUT" or method == "DELETE"): 
-            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r", "utf-8"));
+            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r", "utf-8"))
             return
         if (os.path.isdir(self.base + path) and path[-1] != "/"):
             self.redirect(path)
             return
 
-        if (os.path.isfile((self.base + path))):
+        if (self.isValidPath(path) and os.path.isfile((self.base + path))):
             self.servefile(self.base + path, path.split(".")[-1])
-        elif (os.path.isfile(self.base + path + "index.html")):
+        elif (self.isValidPath(path) and os.path.isfile(self.base + path + "index.html")):
             self.servefile(self.base + path + "index.html", "html")
         else:
-            self.request.sendall(bytearray("HTTP/1.1 404 File Not Found\r", "utf-8"));
-
+            self.request.sendall(bytearray("HTTP/1.1 404 File Not Found\r", "utf-8"))
         return
+
+    def isValidPath(self, path):
+        if len(str(os.path.abspath(self.base + path))) < len(str(self.base)):
+            return False
+        if str(os.path.abspath(self.base + path))[0:len(str(self.base))] != str(self.base):
+            return False
+        return True
+        
+
 
     def servefile(self, filename, type):
         print("Serving " + filename)
@@ -77,9 +99,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
 if __name__ == "__main__":
     HOST, PORT = "127.0.0.1", 8080
-    BASE = "/www"
-
     socketserver.TCPServer.allow_reuse_address = True
-
     with socketserver.TCPServer((HOST, PORT), MyWebServer) as server:
         server.serve_forever()
