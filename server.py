@@ -51,20 +51,26 @@ class MyWebServer(socketserver.BaseRequestHandler):
         super().__init__(request, client_address, server)
 
     def handle(self):
+        # make sure there is data -- return if not
         self.data = self.request.recv(1024).decode("utf-8")
         if (not self.data): return
 
+        # get relevant information and alert to stdout that there was connection
         print("Got request:", self.data)
         statusLine = "\n".join(self.data.split("\n")[:1])
         method, path, protocol = statusLine.split(" ")
 
+        # make sure method is legal
         if (method == "POST" or method == "PUT" or method == "DELETE"): 
             self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\n\r\n", "utf-8"))
             return
+
+        # redirect if wacky path
         if (os.path.isdir(self.base + path) and path[-1] != "/"):
             self.redirect(path)
             return
 
+        # check for security before sending files
         if (self.isValidPath(path) and os.path.isfile((self.base + path))):
             self.servefile(self.base + path, path.split(".")[-1])
         elif (self.isValidPath(path) and os.path.isfile(self.base + path + "index.html")):
@@ -74,8 +80,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
         return
 
     def isValidPath(self, path):
+        # make sure the path is at least as long as the currentpath
         if len(str(os.path.abspath(self.base + path))) < len(str(self.base)):
             return False
+        # make sure base directories are matching
         if str(os.path.abspath(self.base + path))[0:len(str(self.base))] != str(self.base):
             return False
         return True
@@ -87,7 +95,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         with open(filename) as f:
             size = os.path.getsize(filename)
             response = "HTTP/1.1 200 OK\r\nContent-Type:text/" + type + ";charset=UTF-8\r\n"
-            #response += "Content-Length: " + str(size) + "\r\n"
+            response += "Content-Length: " + str(size) + "\r\n"
             response += "\r\n"
             print(response)
             self.request.sendall(bytearray(response, "utf-8"))
@@ -95,6 +103,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.request.sendall(bytearray(data, "utf-8"))
 
     def redirect(self, path):
+        # redirect with a 301
         print("\nRedirecting...")
         self.request.sendall(bytearray("HTTP/1.1 301 Moved Permanently\r\nLocation: http://" + HOST + ":" + str(PORT) + path + "/\r\n\r\n", "utf-8"))
 
