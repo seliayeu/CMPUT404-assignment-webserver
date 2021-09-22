@@ -108,7 +108,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.request.sendall(bytearray("HTTP/1.1 301 Moved Permanently\r\nLocation: http://" + HOST + ":" + str(PORT) + path + "/\r\n\r\n", "utf-8"))
 
 if __name__ == "__main__":
-    HOST, PORT = "localhost", 8080
+    HOST, PORT = "127.0.0.1", 8080
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer((HOST, PORT), MyWebServer) as server:
         server.serve_forever()
