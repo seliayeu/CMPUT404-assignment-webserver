@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 #  coding: utf-8 
 import socketserver
 import sys
@@ -52,12 +52,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def handle(self):
         self.data = self.request.recv(1024).decode("utf-8")
+        if (not self.data): return
+
         print("Got request:", self.data)
         statusLine = "\n".join(self.data.split("\n")[:1])
         method, path, protocol = statusLine.split(" ")
 
         if (method == "POST" or method == "PUT" or method == "DELETE"): 
-            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r", "utf-8"))
+            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\n\r\n", "utf-8"))
             return
         if (os.path.isdir(self.base + path) and path[-1] != "/"):
             self.redirect(path)
@@ -68,7 +70,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         elif (self.isValidPath(path) and os.path.isfile(self.base + path + "index.html")):
             self.servefile(self.base + path + "index.html", "html")
         else:
-            self.request.sendall(bytearray("HTTP/1.1 404 File Not Found\r", "utf-8"))
+            self.request.sendall(bytearray("HTTP/1.1 404 File Not Found\r\n\r\n", "utf-8"))
         return
 
     def isValidPath(self, path):
@@ -84,7 +86,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
         print("Serving " + filename)
         with open(filename) as f:
             size = os.path.getsize(filename)
-            response = "HTTP/1.1 200 OK\nContent-Type:text/" + type + ";charset=UTF-8\n\n"
+            response = "HTTP/1.1 200 OK\r\nContent-Type:text/" + type + ";charset=UTF-8\r\n"
+            #response += "Content-Length: " + str(size) + "\r\n"
+            response += "\r\n"
             print(response)
             self.request.sendall(bytearray(response, "utf-8"))
             data = f.read(size)
@@ -92,10 +96,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def redirect(self, path):
         print("\nRedirecting...")
-        self.request.sendall(bytearray("HTTP/1.1 301 Moved Permanently\r\nLocation: http://" + HOST + ":" + str(PORT) + path + "/", "utf-8"))
+        self.request.sendall(bytearray("HTTP/1.1 301 Moved Permanently\r\nLocation: http://" + HOST + ":" + str(PORT) + path + "/\r\n\r\n", "utf-8"))
 
 if __name__ == "__main__":
-    HOST, PORT = "127.0.0.1", 8080
+    HOST, PORT = "localhost", 8080
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer((HOST, PORT), MyWebServer) as server:
         server.serve_forever()
