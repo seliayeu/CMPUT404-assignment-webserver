@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 #  coding: utf-8 
 import socketserver
-import sys
 import os
-import json
+from urllib.parse import unquote
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -59,6 +58,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         print("Got request:", self.data)
         statusLine = "\n".join(self.data.split("\n")[:1])
         method, path, protocol = statusLine.split(" ")
+        path = unquote(path)
 
         # make sure method is legal
         if (method == "POST" or method == "PUT" or method == "DELETE"): 
