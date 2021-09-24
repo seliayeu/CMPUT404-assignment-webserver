@@ -54,10 +54,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         # make sure there is data -- return if not
         self.data = self.request.recv(1024).decode("utf-8")
-        if (not self.data or len(self.data) < 4): return
+        if (not self.data): return
 
         # assume properly formatted
-        while self.data[-4:] != "\r\n\r\n":
+        while "\r\n\r\n" not in self.data and "\n\n" not in self.data:
             self.data += self.request.recv(1024).decode("utf-8")
 
         # get relevant information and alert to stdout that there was connection
