@@ -98,6 +98,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
             size = os.path.getsize(filename)
             response = "HTTP/1.1 200 OK\r\nContent-Type:text/" + type + ";charset=UTF-8\r\n"
             response += "Content-Length: " + str(size) + "\r\n"
+            # the following line of code is modified from the line written in https://stackoverflow.com/a/225177 by user Ber
+            # to remove a print statement and concatenate "Date: " and "\r\n". this code is licences under CC BY-CA 2.5 which
+            # can be found here https://creativecommons.org/licenses/by-sa/2.5/
             response += "Date: " + formatdate(timeval=None, localtime=False, usegmt=True) + "\r\n"
             response += "Connection: close\r\n"
             response += "\r\n"
