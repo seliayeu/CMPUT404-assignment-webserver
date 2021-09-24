@@ -54,7 +54,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         # make sure there is data -- return if not
         self.data = self.request.recv(1024).decode("utf-8")
-        if (not self.data): return
+        if (not self.data or len(self.data) < 4): return
+
+        # assume properly formatted
+        while self.data[-4:] != "\r\n\r\n":
+            self.data += self.request.recv(1024).decode("utf-8")
 
         # get relevant information and alert to stdout that there was connection
         print("Got request:", self.data)
@@ -90,13 +94,16 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return False
         return True
         
-
+    def getMimeType(self, extension):
+        if extension == "html" or extension == "css":
+            return "text/" + extension
+        return "application/octet-stream"
 
     def servefile(self, filename, type):
         print("Serving " + filename)
         with open(filename) as f:
             size = os.path.getsize(filename)
-            response = "HTTP/1.1 200 OK\r\nContent-Type:text/" + type + ";charset=UTF-8\r\n"
+            response = "HTTP/1.1 200 OK\r\nContent-Type: " + self.getMimeType(type)  + ";charset=UTF-8\r\n"
             response += "Content-Length: " + str(size) + "\r\n"
             # the following line of code is modified from the line written in https://stackoverflow.com/a/225177 by user Ber
             # to remove a print statement and concatenate "Date: " and "\r\n". this code is licences under CC BY-CA 2.5 which
