@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 #  coding: utf-8 
+from datetime import time
 import socketserver
 import os
 from urllib.parse import unquote
+from email.utils import formatdate
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -96,6 +98,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             size = os.path.getsize(filename)
             response = "HTTP/1.1 200 OK\r\nContent-Type:text/" + type + ";charset=UTF-8\r\n"
             response += "Content-Length: " + str(size) + "\r\n"
+            response += "Date: " + formatdate(timeval=None, localtime=False, usegmt=True) + "\r\n"
+            response += "Connection: close\r\n"
             response += "\r\n"
             print(response)
             self.request.sendall(bytearray(response, "utf-8"))
